@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Timestamp Conversion</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 50vh;
+        margin: 0;
+        font-family: Arial, sans-serif;
+      }
+
+      #timestampForm,
+      #results {
+        width: 90%;
+        max-width: 400px;
+        margin: 20px auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #f9f9f9;
+      }
+
+      label,
+      input,
+      button,
+      h2,
+      h3 {
+        width: 100%;
+        text-align: center;
+      }
+
+      input {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: calc(100% - 24px);
+      }
+
+      button {
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      #btn_remove {
+        width: 20%;
+        margin: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      @media (max-width: 600px) {
+        body {
+          padding: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Timestamp Conversion Form</h2>
+    <form id="timestampForm">
+      <label for="userInput">Enter LastCrackedHourGlassDropTime:</label><br />
+      <input type="text" id="userInput" name="userInput" required /><br /><br />
+      <label for="timeAddition">Enter interval time:</label><br />
+      <input
+        type="number"
+        id="timeAddition"
+        name="timeAddition"
+        required
+      /><br /><br />
+      <button type="button" onclick="convertTimestamp()">Add</button>
+    </form>
+
+    <h3>Final Result:</h3>
+    <div id="results"></div>
+
+    <script>
+      function convertTimestamp() {
+        // Get user input values
+        const userInput = document.getElementById("userInput").value;
+        const timeAddition = parseInt(
+          document.getElementById("timeAddition").value
+        );
+
+        // Convert user input to timestamp
+        const inputDate = new Date(userInput);
+        let timestamp = inputDate.getTime();
+
+        // Add the time addition to the timestamp
+        timestamp += timeAddition * 60 * 60 * 1000;
+
+        // Convert final timestamp to date
+        const finalDate = new Date(timestamp);
+
+        // Format the final date as dd/mm/yyyy, hh:mm AM/PM
+        const formattedDate = `${finalDate
+          .getDate()
+          .toString()
+          .padStart(2, "0")}/${(finalDate.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}/${finalDate.getFullYear()}, ${(
+          finalDate.getHours() % 12 || 12
+        )
+          .toString()
+          .padStart(2, "0")}:${finalDate
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")} ${finalDate.getHours() >= 12 ? "PM" : "AM"}`;
+
+        // Save result to localStorage
+        let results = JSON.parse(localStorage.getItem("results")) || [];
+        results.push({ formattedDate, timestamp });
+        localStorage.setItem("results", JSON.stringify(results));
+
+        // Display the result
+        displayResults();
+      }
+
+      function displayResults() {
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = "";
+        const results = JSON.parse(localStorage.getItem("results")) || [];
+        results.forEach((result, index) => {
+          const resultElement = document.createElement("div");
+          resultElement.innerHTML = `${result.formattedDate} <span id="countdown${index}"></span> <button id="btn_remove"onclick="removeResult(${index})">Remove</button> `;
+          resultsDiv.appendChild(resultElement);
+          startCountdown(result.timestamp, `countdown${index}`);
+        });
+      }
+
+      function removeResult(index) {
+        let results = JSON.parse(localStorage.getItem("results")) || [];
+        results.splice(index, 1);
+        localStorage.setItem("results", JSON.stringify(results));
+        displayResults();
+      }
+
+      function startCountdown(targetTime, elementId) {
+        function updateCountdown() {
+          const now = new Date().getTime();
+          const distance = targetTime - now;
+
+          if (distance < 0) {
+            document.getElementById(elementId).innerText =
+              " - Countdown finished";
+            return;
+          }
+
+          const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+          const hours = Math.floor(
+            (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+          );
+          const minutes = Math.floor(
+            (distance % (1000 * 60 * 60)) / (1000 * 60)
+          );
+          const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+          document.getElementById(
+            elementId
+          ).innerText = ` : ${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+      }
+
+      // Display results on page load
+      window.onload = displayResults;
+    </script>
+  </body>
+</html>
